@@ -9,9 +9,11 @@ const upload = async (req, res) => {
     if (req.file == undefined) {
       return res.status(400).send({ message: "Please upload a file!" });
     }
-
     res.status(200).send({
       message: "Uploaded the file successfully: " + req.file.originalname,
+      type: req.file.mimetype,
+      url: baseUrl + req.file.originalname,
+      size: req.file.size
     });
   } catch (err) {
     console.log(err);
@@ -29,14 +31,16 @@ const upload = async (req, res) => {
 };
 
 const getListFiles = (req, res) => {
-  const directoryPath = __basedir + "/resources/static/assets/uploads/";
-
+  const { roomId } = req.params;
+  const directoryPath = __basedir + `/resources/static/assets/uploads/room_${roomId}`;
+   
   fs.readdir(directoryPath, function (err, files) {
     if (err) {
       res.status(500).send({
         message: "Unable to scan files!",
       });
     }
+    console.log(directoryPath,files)
 
     let fileInfos = [];
 
@@ -52,9 +56,9 @@ const getListFiles = (req, res) => {
 };
 
 const download = (req, res) => {
-  const fileName = req.params.name;
-  const directoryPath = __basedir + "/resources/static/assets/uploads/";
+  const {name: fileName, roomId } = req.params;
 
+  const directoryPath = __basedir + `/resources/static/assets/uploads/room_${roomId}/`;
   res.download(directoryPath + fileName, fileName, (err) => {
     if (err) {
       res.status(500).send({
