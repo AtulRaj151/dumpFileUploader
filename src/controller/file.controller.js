@@ -9,7 +9,7 @@ const upload = async (req, res) => {
     if (req.file == undefined) {
       return res.status(400).send({ message: "Please upload a file!" });
     }
-    res.status(200).send({
+    return res.status(200).send({
       message: "Uploaded the file successfully: " + req.file.originalname,
       type: req.file.mimetype,
       url: baseUrl + req.file.originalname,
@@ -21,38 +21,45 @@ const upload = async (req, res) => {
     if (err.code == "LIMIT_FILE_SIZE") {
       return res.status(500).send({
         message: "File size cannot be larger than 2MB!",
+        url: ''
       });
     }
 
-    res.status(500).send({
+    return res.status(500).send({
       message: `Could not upload the file: ${req.file.originalname}. ${err}`,
     });
   }
 };
 
 const getListFiles = (req, res) => {
-  const { roomId } = req.params;
-  const directoryPath = __basedir + `/resources/static/assets/uploads/room_${roomId}`;
-   
-  fs.readdir(directoryPath, function (err, files) {
-    if (err) {
-      res.status(500).send({
-        message: "Unable to scan files!",
+  try {
+    const { roomId } = req.params;
+    const directoryPath = __basedir + `/resources/static/assets/uploads/room_${roomId}`;
+    fs.readdir(directoryPath, function (err, files) {
+      if (err) {
+        return res.status(500).send({
+          message: "Unable to scan files!",
+          name: 'NA',
+          url: ''
+        });
+      }
+      console.log(directoryPath,files)
+  
+      let fileInfos = [];
+  
+      files.forEach((file) => {
+        fileInfos.push({
+          name: file,
+          url: baseUrl + file,
+        });
       });
-    }
-    console.log(directoryPath,files)
-
-    let fileInfos = [];
-
-    files.forEach((file) => {
-      fileInfos.push({
-        name: file,
-        url: baseUrl + file,
-      });
+  
+      return res.status(200).send(fileInfos);
     });
+  } catch (error) {
+    return res.status(500).send([{name: 'file',url: ''}]);
+  }
 
-    res.status(200).send(fileInfos);
-  });
 };
 
 const download = (req, res) => {
